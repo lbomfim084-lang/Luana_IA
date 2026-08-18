@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f1a" />
+  <title>Luana</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-name">LUANA</span>
+        <span class="status" id="status-indicator">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">online</span>
+        </span>
+      </div>
+      <div class="topbar-actions">
+        <button id="btn-clear" class="icon-btn" title="Limpar conversa" aria-label="Limpar conversa">🗑️</button>
+        <button id="btn-settings" class="icon-btn" title="Ajustes" aria-label="Ajustes">⚙️</button>
+      </div>
+    </header>
+
+    <main class="conversation" id="conversation" aria-live="polite">
+      <div class="greeting" id="greeting">
+        <p>Como posso ajudar?</p>
+      </div>
+    </main>
+
+    <div class="live-transcript" id="live-transcript" hidden></div>
+
+    <footer class="control-bar">
+      <form id="text-form" class="text-form">
+        <input
+          id="text-input"
+          type="text"
+          placeholder="Fale com a Luana ou digite aqui..."
+          autocomplete="off"
+        />
+        <button type="submit" class="send-btn" id="btn-send" aria-label="Enviar">➤</button>
+      </form>
+
+      <button id="btn-mic" class="mic-btn" aria-label="Toque para falar">
+        <span id="mic-icon">🎙️</span>
+      </button>
+      <div class="mic-label" id="mic-label">Toque para falar</div>
+    </footer>
+  </div>
+
+  <dialog id="settings-dialog" class="settings-dialog">
+    <form method="dialog" class="settings-form" id="settings-form">
+      <h2>Ajustes</h2>
+
+      <label for="input-endpoint">Endpoint de IA (URL)</label>
+      <input
+        id="input-endpoint"
+        type="url"
+        placeholder="https://seu-backend.exemplo.com/luana"
+      />
+      <p class="hint">
+        A Luana envia perguntas abertas para esse endpoint. Nenhuma chave de
+        API fica no aplicativo — a chave deve morar no seu backend.
+      </p>
+
+      <label class="checkbox-row">
+        <input type="checkbox" id="input-voice-enabled" checked />
+        Responder por voz
+      </label>
+
+      <div class="settings-actions">
+        <button type="button" id="btn-close-settings" class="btn-secondary">Cancelar</button>
+        <button type="submit" id="btn-save-settings" class="btn-primary">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
