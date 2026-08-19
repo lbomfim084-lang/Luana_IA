@@ -29,6 +29,11 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
+      - name: Preparar pasta www para o Capacitor
+        run: |
+          mkdir -p www
+          cp -r index.html style.css app.js manifest.json service-worker.js modules assets www/
+
       - name: Adicionar projeto Android (se ainda não existir)
         run: |
           if [ ! -d "android" ]; then
