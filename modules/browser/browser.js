@@ -49,4 +49,4 @@ export async function openWebsite(rawName) {
   }
 
   // 2. É um serviço conhecido -> deixa o appManager decidir (app ou web)
-  const known = findAppEntry(name
+  const known = findAppEntry(name)
