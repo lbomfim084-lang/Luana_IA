@@ -21,30 +21,32 @@ function toDomainGuess(name) {
   return `https://${slug}.com`;
 }
 
+// Abre uma URL corretamente tanto dentro do app nativo (Capacitor)
+// quanto num navegador comum. window.open() sozinho não funciona
+// dentro do WebView do app instalado — por isso usamos o plugin
+// @capacitor/browser quando ele está disponível.
+async function openInBrowser(url) {
+  const Browser = window.Capacitor?.Plugins?.Browser;
+  if (Browser) {
+    await Browser.open({ url });
+  } else {
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
 /**
  * Abre um site a partir de um nome falado ou de uma URL/domínio explícito.
  * Retorna { ok, label, mode } — mode: 'app' | 'web' | 'guess'
  */
-export function openWebsite(rawName) {
+export async function openWebsite(rawName) {
   const name = rawName.trim();
 
   // 1. Já é uma URL/domínio explícito (ex.: "instagram.com")
   if (looksLikeDomain(name)) {
     const url = name.startsWith('http') ? name : `https://${name}`;
-    window.open(url, '_blank', 'noopener');
+    await openInBrowser(url);
     return { ok: true, label: name, mode: 'web' };
   }
 
   // 2. É um serviço conhecido -> deixa o appManager decidir (app ou web)
-  const known = findAppEntry(name);
-  if (known) {
-    return openApp(name);
-  }
-
-  // 3. Tenta um palpite razoável de domínio
-  const guess = toDomainGuess(name);
-  window.open(guess, '_blank', 'noopener');
-  return { ok: true, label: name, mode: 'guess' };
-}
-
-export { COMMON_SUFFIXES };
+  const known = findAppEntry(name
