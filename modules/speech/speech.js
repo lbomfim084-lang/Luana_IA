@@ -1,6 +1,10 @@
 // modules/speech/speech.js
-// Reconhecimento de voz (Web Speech API) e síntese de fala em PT-BR.
-// Se o navegador não suportar, o app continua funcionando por texto.
+// Reconhecimento de voz e síntese de fala em PT-BR.
+//
+// Dentro do app instalado (Capacitor), a Web Speech API do navegador não
+// existe — por isso usamos o plugin nativo @capacitor-community/speech-recognition
+// quando o app está rodando como app nativo. No navegador comum (ex.: testando
+// pelo GitHub Pages), continua usando a Web Speech API normalmente.
 
 export const SpeechState = {
   IDLE: 'idle',
@@ -13,7 +17,11 @@ export const SpeechState = {
 const SpeechRecognitionImpl =
   window.SpeechRecognition || window.webkitSpeechRecognition || null;
 
+const NativeSpeechRecognition = window.Capacitor?.Plugins?.SpeechRecognition || null;
+const isNativeApp = Boolean(window.Capacitor?.isNativePlatform?.());
+
 export function isRecognitionSupported() {
+  if (isNativeApp) return Boolean(NativeSpeechRecognition);
   return Boolean(SpeechRecognitionImpl);
 }
 
@@ -24,6 +32,77 @@ export function isSynthesisSupported() {
 export function createRecognizer({ onResult, onEnd, onError }) {
   if (!isRecognitionSupported()) return null;
 
+  // ---------- Caminho nativo (app instalado) ----------
+  if (isNativeApp && NativeSpeechRecognition) {
+    let listeners = [];
+    let lastMatch = '';
+
+    return {
+      async start() {
+        try {
+          const { available } = await NativeSpeechRecognition.available();
+          if (!available) {
+            onError && onError('not-available');
+            return;
+          }
+
+          let perm = await NativeSpeechRecognition.checkPermissions();
+          if (perm.speechRecognition !== 'granted') {
+            perm = await NativeSpeechRecognition.requestPermissions();
+          }
+          if (perm.speechRecognition !== 'granted') {
+            onError && onError('permission-denied');
+            return;
+          }
+
+          lastMatch = '';
+
+          const partialListener = await NativeSpeechRecognition.addListener(
+            'partialResults',
+            (data) => {
+              lastMatch = data.matches && data.matches[0] ? data.matches[0] : lastMatch;
+              onResult({ interim: lastMatch, final: '' });
+            }
+          );
+          listeners.push(partialListener);
+
+          const stateListener = await NativeSpeechRecognition.addListener(
+            'listeningState',
+            (data) => {
+              if (data.status === 'stopped') {
+                if (lastMatch) onResult({ interim: '', final: lastMatch });
+                onEnd && onEnd();
+              }
+            }
+          );
+          listeners.push(stateListener);
+
+          await NativeSpeechRecognition.start({
+            language: 'pt-BR',
+            maxResults: 1,
+            partialResults: true,
+            popup: false,
+          });
+        } catch (err) {
+          onError && onError(err?.message || 'recognition-error');
+        }
+      },
+
+      async stop() {
+        try {
+          await NativeSpeechRecognition.stop();
+        } catch {
+          // já parado
+        }
+        for (const listener of listeners) {
+          try { await listener.remove(); } catch {}
+        }
+        listeners = [];
+      },
+    };
+  }
+
+  // ---------- Caminho navegador (Web Speech API) ----------
   const recognition = new SpeechRecognitionImpl();
   recognition.lang = 'pt-BR';
   recognition.continuous = false;
@@ -94,4 +173,4 @@ export function speak(text, { onStart, onEnd } = {}) {
 
 export function stopSpeaking() {
   if (isSynthesisSupported()) window.speechSynthesis.cancel();
-}
+            }
